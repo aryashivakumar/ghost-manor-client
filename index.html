@@ -347,36 +347,40 @@ socket.on('game:start',({players})=>{
 
 socket.on('game:state',(pkt)=>{
   if(!inGame||gameOver)return;
-  // Ghost visibility flags
-  if(pkt.ghost){
-    G.hp=pkt.ghost.hp;
-    G.visible=pkt.ghost.visible;
-    G.minimapVis=pkt.ghost.minimapVis;
+
+  // New flat packet format from server
+  G.visible = !!pkt.ghostVisible;
+  G.minimapVis = !!pkt.ghostMinimap;
+  G.hp = pkt.ghostHp || 0;
+  if(pkt.batteries) bats=pkt.batteries;
+  if(pkt.litAmt!==undefined) litAmt=pkt.litAmt;
+
+  // My authoritative state from server
+  const me=(pkt.players||[]).find(p=>p.id===socket.id);
+  if(me){
+    // Server is authoritative for battery — accept it directly, no local override
+    P.battery=me.battery;
+    P.flashOn=me.flashOn;
+    P.lives=me.lives;
+    P.alive=me.alive;
   }
-  if(pkt.batteries)bats=pkt.batteries;
-  if(pkt.litAmt!==undefined)litAmt=pkt.litAmt;
 
-  // My authoritative state
-  const me=pkt.players&&pkt.players.find(p=>p.id===socket.id);
-  if(me){P.battery=me.battery;P.flashOn=me.flashOn;P.lives=me.lives;P.alive=me.alive;}
+  // Ghost position — from the ghost player entry
+  const ghostP=(pkt.players||[]).find(p=>p.role==='ghost');
+  if(ghostP){ G.x=ghostP.x; G.z=ghostP.z; G.y=ghostP.y||GR; }
 
-  // Ghost world position from ghost player
-  const ghostP=pkt.players&&pkt.players.find(p=>p.role==='ghost');
-  if(ghostP){G.x=ghostP.x;G.z=ghostP.z;G.y=ghostP.y||GR;}
-
-  // Others = real humans OTHER than self, and never the ghost player
-  // Ghost renders via drawGhost() separately. Self renders as camera POV.
+  // Others = everyone except self AND except ghost (ghost rendered via drawGhost)
   others=(pkt.players||[]).filter(p=>p.id!==socket.id && p.role!=='ghost');
 
-  // Proximity vignette for hunters — white fill from edges
-  if(myRole==='hunter'&&pkt.ghostDist!==undefined){
+  // Proximity vignette (hunters only)
+  if(myRole==='hunter'){
     const maxD=7*CELL;
-    const n=Math.max(0,1-pkt.ghostDist/maxD);
-    const intens=Math.pow(n,2.2)*0.7; // 0 when far, up to 0.7 when touching
+    const dist=pkt.ghostDist||9999;
+    const n=Math.max(0,1-dist/maxD);
+    const intens=Math.pow(n,2.2)*0.7;
     const prox=document.getElementById('prox');
     if(intens>0.01){
-      // White vignette fills inward — closer = fills more toward center
-      const stopPct=Math.max(10,70-intens*65); // shrinks center safe zone
+      const stopPct=Math.max(10,70-intens*65);
       prox.style.background=`radial-gradient(ellipse at center, transparent ${stopPct.toFixed(0)}%, rgba(255,255,255,${(intens*0.8).toFixed(2)}) 100%)`;
       prox.style.opacity='1';
     } else {
@@ -389,13 +393,11 @@ socket.on('game:state',(pkt)=>{
 });
 
 socket.on('lightning:strike',()=>{
-  litAmt=1.0;
-  // Temporarily show ghost on minimap
-  G.minimapVis=true;
+  // Server manages ghostMinimap timing via game:state packets
+  // Client just does the visual white flash
   const f=document.getElementById('litflash');
-  f.style.background='rgba(200,230,255,.2)';
+  f.style.background='rgba(200,230,255,.22)';
   setTimeout(()=>{f.style.background='rgba(200,230,255,0)';},600);
-  setTimeout(()=>{G.minimapVis=false;},2300);
   notif('⚡ Lightning!','#ccf');
 });
 socket.on('battery:pickup',()=>notif('⚡ Battery refilled!','#af8'));
@@ -729,11 +731,8 @@ function loop(ts){
   if(mv){P.bobT+=dt*5.5;P.bobAmt=Math.min(1,P.bobAmt+dt*5);}else P.bobAmt=Math.max(0,P.bobAmt-dt*8);
   P.y=EYE+P.bobAmt*Math.sin(P.bobT)*.028;
 
-  // Local battery preview (smooth, no flicker)
-  if(myRole==='hunter'){
-    if(P.flashOn)P.battery=Math.max(0,P.battery-dt*.014);
-    if(P.battery<=0)P.flashOn=false;
-  }
+  // Battery: server is authoritative, no local drain here
+  // (P.battery is set from server game:state packets)
 
   // Send to server ~30Hz
   inputT+=dt;
