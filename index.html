@@ -180,7 +180,7 @@ void main(){
   float cone=smoothstep(.42,.84,spot);
   float att=1./(1.+.10*d+.02*d*d);
   float fl=cone*att*uFOn*uFBat*4.5;
-  vec3 col=vC*(vec3(.18,.22,.15)+vec3(.98,.99,1.)*fl+vec3(.9)*uLit);
+  vec3 ambBase=mix(vec3(.18,.22,.15),vec3(.85,.88,.82),uLit);vec3 col=vC*(ambBase+vec3(.98,.99,1.)*fl);
   float fog=clamp(d/28.,0.,1.);fog*=fog;
   col=mix(clamp(col,0.,1.),vec3(.07,.09,.05),fog*.45);
   gl_FragColor=vec4(col,1.);
@@ -223,7 +223,7 @@ void main(){
   float cone=smoothstep(.42,.84,spot);
   float att=1./(1.+.10*d+.02*d*d);
   float fl=cone*att*uFOn*uFBat*4.5;
-  vec3 col=uCol*(vec3(.25)+vec3(.9)*fl+vec3(.85)*uLit);
+  vec3 ambBase2=mix(vec3(.25),vec3(.9),uLit);vec3 col=uCol*(ambBase2+vec3(.9)*fl);
   col=clamp(col,0.,1.);
   gl_FragColor=vec4(col,1.);
 }`;
@@ -623,12 +623,14 @@ function setFlash(prog){
   const fpx=P.x+Math.sin(P.yaw)*.3,fpz=P.z+Math.cos(P.yaw)*.3;
   const fdx=Math.sin(P.yaw)*Math.cos(P.pitch),fdy=Math.sin(P.pitch),fdz=Math.cos(P.yaw)*Math.cos(P.pitch);
   const fon=myRole==='hunter'?(P.flashOn?1.0:0.0):0.0;
+  // Ghost sees fully lit world. Hunters use litAmt (lightning).
+  const ambientLit=myRole==='ghost'?1.0:litAmt;
   // Battery is authoritative from server — smooth, no randomness
   gl.uniform3f(gl.getUniformLocation(prog,'uFP'),fpx,P.y,fpz);
   gl.uniform3f(gl.getUniformLocation(prog,'uFD'),fdx,fdy,fdz);
   gl.uniform1f(gl.getUniformLocation(prog,'uFOn'),fon);
   gl.uniform1f(gl.getUniformLocation(prog,'uFBat'),Math.max(0,P.battery));
-  gl.uniform1f(gl.getUniformLocation(prog,'uLit'),litAmt);
+  gl.uniform1f(gl.getUniformLocation(prog,'uLit'),ambientLit);
 }
 
 function drawWorld(VP){
@@ -737,33 +739,36 @@ function loop(ts){
 
   if(!inGame||gameOver)return;
 
-  // Mouse look — only when pointer is locked
+  // Mouse look (pointer lock required)
   if(locked){
     P.yaw+=mDX*.002;
-    P.pitch+=mDY*.0018;
-    P.pitch=Math.max(-1.05,Math.min(1.05,P.pitch));
+    P.pitch=Math.max(-1.05,Math.min(1.05,P.pitch+mDY*.0018));
   }
   mDX=0;mDY=0;
 
-  // Movement — always active once game starts (don't require pointer lock)
-  const spd=2.2*dt,sY=Math.sin(P.yaw),cY=Math.cos(P.yaw);
-  let dx=0,dz=0,mv=false;
-  if(keys['KeyW']||keys['ArrowUp']){dx+=sY*spd;dz+=cY*spd;mv=true;}
-  if(keys['KeyS']||keys['ArrowDown']){dx-=sY*spd*.65;dz-=cY*spd*.65;mv=true;}
-  if(keys['KeyA']){dx-=cY*spd*.78;dz+=sY*spd*.78;mv=true;}
-  if(keys['KeyD']){dx+=cY*spd*.78;dz-=sY*spd*.78;mv=true;}
-  if(mv)tryMove(P.x+dx,P.z+dz);
-  if(mv){P.bobT+=dt*5.5;P.bobAmt=Math.min(1,P.bobAmt+dt*5);}else P.bobAmt=Math.max(0,P.bobAmt-dt*8);
+  // Movement - ALWAYS runs when inGame, no pointer lock needed
+  const spd=2.2*dt;
+  const sY=Math.sin(P.yaw),cY=Math.cos(P.yaw);
+  let mvdx=0,mvdz=0;
+  if(keys['KeyW']||keys['ArrowUp'])   {mvdx+=sY*spd;   mvdz+=cY*spd;}
+  if(keys['KeyS']||keys['ArrowDown']) {mvdx-=sY*spd*.65;mvdz-=cY*spd*.65;}
+  if(keys['KeyA'])                       {mvdx-=cY*spd*.78;mvdz+=sY*spd*.78;}
+  if(keys['KeyD'])                       {mvdx+=cY*spd*.78;mvdz-=sY*spd*.78;}
+  const moving=mvdx!==0||mvdz!==0;
+  if(moving)tryMove(P.x+mvdx,P.z+mvdz);
+  P.bobAmt=moving?Math.min(1,P.bobAmt+dt*5):Math.max(0,P.bobAmt-dt*8);
+  if(moving)P.bobT+=dt*5.5;
   P.y=EYE+P.bobAmt*Math.sin(P.bobT)*.028;
 
-  // Battery: server is authoritative, no local drain here
-  // (P.battery is set from server game:state packets)
-
-  // Always send position to server ~30Hz
+  // Send input to server at 30Hz - always, even when standing still (so server has yaw)
   inputT+=dt;
   if(inputT>=.033){
     inputT=0;
-    socket.emit('input',{dx,dz,yaw:P.yaw,pitch:P.pitch,flashOn:P.flashOn});
+    socket.emit('input',{
+      dx:mvdx, dz:mvdz,
+      yaw:P.yaw, pitch:P.pitch,
+      flashOn:P.flashOn
+    });
   }
 }
 requestAnimationFrame(loop);
