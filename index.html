@@ -8,11 +8,8 @@
 body{background:#000;overflow:hidden;font-family:'Georgia',serif;}
 canvas#c{display:block;width:100vw;height:100vh;}
 
-/* OVERLAY UI */
-#ui{position:fixed;inset:0;z-index:20;}
-
 /* MENU */
-#menu{position:fixed;inset:0;background:rgba(2,6,2,.96);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+#menu{position:fixed;inset:0;background:rgba(2,6,2,.96);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;z-index:20;}
 #menu h1{font-size:42px;color:#6adf6a;text-shadow:0 0 28px rgba(0,210,0,.5);letter-spacing:4px;}
 #menu .sub{color:rgba(140,180,140,.5);font-size:12px;letter-spacing:2px;margin-bottom:8px;}
 .panel{background:rgba(4,12,4,.95);border:1px solid #1a3a1a;border-radius:10px;padding:32px 40px;display:flex;flex-direction:column;gap:12px;min-width:320px;}
@@ -23,7 +20,7 @@ button:hover{background:linear-gradient(180deg,#236a23,#155015);color:#aef8ae;}
 .err{color:#f87;font-size:12px;min-height:14px;text-align:center;}
 .divider{height:1px;background:linear-gradient(90deg,transparent,#1a3a1a,transparent);}
 .code-big{font-size:30px;letter-spacing:8px;color:#8aff8a;text-shadow:0 0 14px rgba(0,255,0,.4);background:rgba(0,0,0,.6);border:1px solid #1a5a1a;border-radius:8px;padding:12px 24px;text-align:center;font-weight:bold;}
-#plist{display:flex;flex-direction:column;gap:6px;width:100%;}
+#plist,#jplist{display:flex;flex-direction:column;gap:6px;width:100%;}
 .prow{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.4);border:1px solid #1a3a1a;border-radius:6px;padding:7px 12px;font-size:13px;}
 .pdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 .pname{flex:1;color:#a0d0a0;}
@@ -32,12 +29,12 @@ button:hover{background:linear-gradient(180deg,#236a23,#155015);color:#aef8ae;}
 .lstat{color:rgba(130,170,130,.45);font-size:11px;letter-spacing:1px;text-align:center;}
 
 /* HUD */
-#hud{position:fixed;inset:0;pointer-events:none;display:none;}
-#minimap{position:fixed;bottom:18px;right:18px;border:2px solid #2a4a2a;background:#000;image-rendering:pixelated;}
+#hud{position:fixed;inset:0;pointer-events:none;display:none;z-index:10;}
+#minimap{position:fixed;bottom:18px;right:18px;border:2px solid #2a4a2a;background:#000;image-rendering:pixelated;display:none;}
 #bat-wrap{position:fixed;bottom:18px;left:18px;}
 #bat-label{color:#7aaa7a;font-size:10px;letter-spacing:2px;margin-bottom:3px;}
 #bat-outer{width:140px;height:12px;border:2px solid #2a4a2a;background:rgba(0,0,0,.7);}
-#bat-inner{height:100%;width:100%;transition:width .1s;}
+#bat-inner{height:100%;width:100%;}
 #lives{position:fixed;top:16px;left:16px;display:flex;gap:4px;}
 .heart{font-size:18px;}
 #ghp-wrap{position:fixed;top:16px;right:18px;text-align:right;}
@@ -49,26 +46,26 @@ button:hover{background:linear-gradient(180deg,#236a23,#155015);color:#aef8ae;}
 #xhair::before,#xhair::after{content:'';position:absolute;background:rgba(255,255,255,.7);border-radius:2px;}
 #xhair::before{width:2px;height:100%;left:50%;transform:translateX(-50%);}
 #xhair::after{height:2px;width:100%;top:50%;transform:translateY(-50%);}
-#prox{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .3s;}
+
+/* Proximity vignette — white fills in from edges */
+#prox{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;}
+
 #rolebadge{position:fixed;top:48px;left:50%;transform:translateX(-50%);font-size:12px;letter-spacing:2px;padding:3px 14px;border-radius:10px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.1);color:#8af;}
 #ghosthud{position:fixed;top:16px;left:50%;transform:translateX(-50%);font-size:12px;color:#c8a8f8;letter-spacing:2px;display:none;background:rgba(20,0,40,.7);border:1px solid #5a3a8a;border-radius:8px;padding:4px 16px;}
 #otherl{position:fixed;bottom:18px;left:165px;display:flex;gap:8px;}
 .ocard{font-size:11px;color:rgba(180,220,180,.55);background:rgba(0,0,0,.4);border:1px solid #1a3a1a;border-radius:5px;padding:3px 9px;}
 #clicktip{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);color:rgba(140,180,140,.4);font-size:11px;letter-spacing:1px;}
 
-/* GAMEOVER */
 #go{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:60;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
 #go h1{font-size:40px;text-shadow:0 0 22px currentColor;}
 #go p{color:rgba(255,255,255,.45);font-size:13px;letter-spacing:2px;}
 #go button{width:auto;}
-
-#litflash{position:fixed;inset:0;background:rgba(200,230,255,0);pointer-events:none;transition:background .05s;}
+#litflash{position:fixed;inset:0;background:rgba(200,230,255,0);pointer-events:none;transition:background .05s;z-index:5;}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 
-<!-- MENU -->
 <div id="menu">
   <h1>GHOST MANOR</h1>
   <div class="sub">asymmetric multiplayer horror</div>
@@ -99,7 +96,6 @@ button:hover{background:linear-gradient(180deg,#236a23,#155015);color:#aef8ae;}
   </div>
 </div>
 
-<!-- HUD -->
 <div id="hud">
   <div id="lives"></div>
   <div id="bat-wrap"><div id="bat-label">⚡ FLASHLIGHT</div><div id="bat-outer"><div id="bat-inner"></div></div></div>
@@ -109,9 +105,9 @@ button:hover{background:linear-gradient(180deg,#236a23,#155015);color:#aef8ae;}
   <div id="xhair"></div>
   <div id="prox"></div>
   <div id="rolebadge"></div>
-  <div id="ghosthud">👻 YOU ARE THE GHOST</div>
+  <div id="ghosthud">👻 YOU ARE THE GHOST — stalk the hunters</div>
   <div id="otherl"></div>
-  <div id="clicktip">Click to start · WASD Move · Mouse Look · F Flashlight</div>
+  <div id="clicktip">Click canvas to start · WASD Move · Mouse Look · F Flashlight · Click Attack</div>
 </div>
 <div id="litflash"></div>
 <div id="go"><h1 id="go-title"></h1><p>Room closed</p><button onclick="location.reload()">Play Again</button></div>
@@ -119,9 +115,7 @@ button:hover{background:linear-gradient(180deg,#236a23,#155015);color:#aef8ae;}
 <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
 <script>
 'use strict';
-
-// ── SERVER URL ──────────────────────────────────────────────────
-const SERVER_URL = 'https://ghost-manor-server.onrender.com';
+const SERVER_URL='https://ghost-manor-server.onrender.com';
 
 // ── MAP ──────────────────────────────────────────────────────────
 const MC=52,MR=32;
@@ -163,34 +157,86 @@ const MAP=[];
 for(let r=0;r<MR;r++){MAP[r]=[];for(let c=0;c<MC;c++)MAP[r][c]=+RAW[r][c]||0;}
 for(let c=0;c<MC;c++){MAP[0][c]=1;MAP[MR-1][c]=1;}
 for(let r=0;r<MR;r++){MAP[r][0]=1;MAP[r][MC-1]=1;}
-
 const CELL=0.62;
-
-// Collect open cells for spawn
 const OPEN=[];
 for(let r=2;r<MR-2;r++)for(let c=2;c<MC-2;c++)if(!MAP[r][c])OPEN.push({r,c});
 
-// ── WEBGL ────────────────────────────────────────────────────────
+// ── WEBGL ─────────────────────────────────────────────────────────
 const canvas=document.getElementById('c');
-canvas.width=innerWidth; canvas.height=innerHeight;
+canvas.width=innerWidth;canvas.height=innerHeight;
 window.addEventListener('resize',()=>{canvas.width=innerWidth;canvas.height=innerHeight;gl.viewport(0,0,innerWidth,innerHeight);});
-
 const gl=canvas.getContext('webgl',{antialias:true,alpha:false});
-gl.enable(gl.DEPTH_TEST); gl.depthFunc(gl.LEQUAL); gl.disable(gl.CULL_FACE);
+gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.disable(gl.CULL_FACE);
 
-// ── SHADERS ──────────────────────────────────────────────────────
+// ── SHADERS ───────────────────────────────────────────────────────
+// World shader
 const WVS=`attribute vec3 aP;attribute vec3 aC;uniform mat4 uVP;varying vec3 vC;varying vec3 vW;void main(){vC=aC;vW=aP;gl_Position=uVP*vec4(aP,1.);}`;
-const WFS=`precision mediump float;varying vec3 vC;varying vec3 vW;uniform vec3 uFP;uniform vec3 uFD;uniform float uFOn;uniform float uFBat;uniform float uLit;void main(){vec3 t=vW-uFP;float d=length(t);float spot=dot(normalize(t),normalize(uFD));float cone=smoothstep(.42,.84,spot);float att=1./(1.+.12*d+.03*d*d);float fl=cone*att*uFOn*uFBat*4.;vec3 amb=vec3(.18,.22,.15);vec3 col=vC*(amb+vec3(.98,.99,1.)*fl+vec3(.9)*uLit);float fog=clamp(d/30.,0.,1.);fog*=fog;col=mix(clamp(col,0.,1.),vec3(.07,.09,.05),fog*.5);gl_FragColor=vec4(col,1.);}`;
+const WFS=`precision mediump float;
+varying vec3 vC;varying vec3 vW;
+uniform vec3 uFP;uniform vec3 uFD;uniform float uFOn;uniform float uFBat;uniform float uLit;
+void main(){
+  vec3 t=vW-uFP;float d=length(t);
+  float spot=dot(normalize(t),normalize(uFD));
+  float cone=smoothstep(.42,.84,spot);
+  float att=1./(1.+.10*d+.02*d*d);
+  float fl=cone*att*uFOn*uFBat*4.5;
+  vec3 col=vC*(vec3(.18,.22,.15)+vec3(.98,.99,1.)*fl+vec3(.9)*uLit);
+  float fog=clamp(d/28.,0.,1.);fog*=fog;
+  col=mix(clamp(col,0.,1.),vec3(.07,.09,.05),fog*.45);
+  gl_FragColor=vec4(col,1.);
+}`;
+
+// Ghost shader
 const GVS=`attribute vec3 aP;attribute vec3 aN;uniform mat4 uMVP;uniform mat4 uM;varying vec3 vW;varying vec3 vN;varying vec3 vL;void main(){vL=aP;vW=(uM*vec4(aP,1.)).xyz;vN=mat3(uM)*aN;gl_Position=uMVP*vec4(aP,1.);}`;
-const GFS=`precision mediump float;varying vec3 vW;varying vec3 vN;varying vec3 vL;uniform vec3 uCam;uniform vec3 uFP;uniform vec3 uFD;uniform float uFOn;uniform float uFBat;uniform float uLit;uniform float uTime;void main(){vec3 N=normalize(vN);vec3 V=normalize(uCam-vW);vec3 toF=normalize(vW-uFP);float d=length(vW-uFP);float spot=dot(toF,normalize(uFD));float cone=smoothstep(.40,.78,spot);float att=1./(1.+.06*d+.01*d*d);float fl=cone*att*uFOn*uFBat*3.;float diff=max(dot(N,-toF),0.);vec3 H=normalize(-toF+V);float spec=pow(max(dot(N,H),0.),80.)*fl;float rim=pow(1.-max(dot(N,V),0.),2.8);vec3 base=vec3(.88,.94,1.);vec3 col=base*(vec3(.52,.58,.55)+base*diff*fl*.9)+vec3(1.)*spec+vec3(.4,.65,1.)*rim*.3+base*uLit*.5;col=clamp(col,0.,1.);float alpha=.82+rim*.16;float e1=length(vec2(vL.x+.27,vL.y-.08));float e2=length(vec2(vL.x-.27,vL.y-.08));col=mix(col,vec3(.02,.03,.05),smoothstep(.14,.09,min(e1,e2))*.92);col=mix(col,vec3(1.),smoothstep(.055,.03,length(vec2(vL.x+.30,vL.y-.14)))*.85);col=mix(col,vec3(1.),smoothstep(.055,.03,length(vec2(vL.x-.24,vL.y-.14)))*.85);gl_FragColor=vec4(col,alpha);}`;
+const GFS=`precision mediump float;
+varying vec3 vW;varying vec3 vN;varying vec3 vL;
+uniform vec3 uCam;uniform vec3 uFP;uniform vec3 uFD;uniform float uFOn;uniform float uFBat;uniform float uLit;uniform float uTime;
+void main(){
+  vec3 N=normalize(vN);vec3 V=normalize(uCam-vW);
+  vec3 toF=normalize(vW-uFP);float d=length(vW-uFP);
+  float spot=dot(toF,normalize(uFD));
+  float cone=smoothstep(.40,.78,spot);
+  float att=1./(1.+.06*d+.01*d*d);
+  float fl=cone*att*uFOn*uFBat*3.;
+  float diff=max(dot(N,-toF),0.);
+  vec3 H=normalize(-toF+V);float spec=pow(max(dot(N,H),0.),80.)*fl;
+  float rim=pow(1.-max(dot(N,V),0.),2.8);
+  vec3 base=vec3(.88,.94,1.);
+  vec3 col=base*(vec3(.52,.58,.55)+base*diff*fl*.9)+vec3(1.)*spec+vec3(.4,.65,1.)*rim*.3+base*uLit*.5;
+  col=clamp(col,0.,1.);
+  float e1=length(vec2(vL.x+.27,vL.y-.08));float e2=length(vec2(vL.x-.27,vL.y-.08));
+  col=mix(col,vec3(.02,.03,.05),smoothstep(.14,.09,min(e1,e2))*.92);
+  col=mix(col,vec3(1.),smoothstep(.055,.03,length(vec2(vL.x+.30,vL.y-.14)))*.85);
+  col=mix(col,vec3(1.),smoothstep(.055,.03,length(vec2(vL.x-.24,vL.y-.14)))*.85);
+  gl_FragColor=vec4(col,.82+rim*.16);
+}`;
+
+// Player sphere shader — lit with flashlight + ambient, tinted by player color
+const PVS=`attribute vec3 aP;attribute vec3 aN;uniform mat4 uMVP;uniform mat4 uM;varying vec3 vN;varying vec3 vW;void main(){vW=(uM*vec4(aP,1.)).xyz;vN=mat3(uM)*aN;gl_Position=uMVP*vec4(aP,1.);}`;
+const PFS=`precision mediump float;
+varying vec3 vN;varying vec3 vW;
+uniform vec3 uCol;uniform vec3 uFP;uniform vec3 uFD;uniform float uFOn;uniform float uFBat;uniform float uLit;
+void main(){
+  vec3 N=normalize(vN);
+  vec3 t=vW-uFP;float d=length(t);
+  float spot=dot(normalize(t),normalize(uFD));
+  float cone=smoothstep(.42,.84,spot);
+  float att=1./(1.+.10*d+.02*d*d);
+  float fl=cone*att*uFOn*uFBat*4.5;
+  vec3 col=uCol*(vec3(.25)+vec3(.9)*fl+vec3(.85)*uLit);
+  col=clamp(col,0.,1.);
+  gl_FragColor=vec4(col,1.);
+}`;
+
+// Battery shader
 const BVS=`attribute vec3 aP;uniform mat4 uMVP;varying vec3 vP;void main(){vP=aP;gl_Position=uMVP*vec4(aP,1.);}`;
 const BFS=`precision mediump float;varying vec3 vP;uniform float uT;void main(){vec3 N=normalize(vP);float r=pow(1.-max(N.z,0.),2.);vec3 c=vec3(.1,1.,.2)*max(N.z,0.)*2.+vec3(.05,.7,.1)*r;gl_FragColor=vec4(clamp(c*(.7+sin(uT)*.3),0.,1.),.85+r*.15);}`;
 
 function mkSh(t,s){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))console.error(gl.getShaderInfoLog(sh));return sh;}
 function mkPr(vs,fs){const p=gl.createProgram();gl.attachShader(p,mkSh(gl.VERTEX_SHADER,vs));gl.attachShader(p,mkSh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(p);return p;}
-const wP=mkPr(WVS,WFS), gP=mkPr(GVS,GFS), bP=mkPr(BVS,BFS);
+const wProg=mkPr(WVS,WFS),gProg=mkPr(GVS,GFS),pProg=mkPr(PVS,PFS),bProg=mkPr(BVS,BFS);
 
-// ── MATRICES ─────────────────────────────────────────────────────
+// ── MATRICES ──────────────────────────────────────────────────────
 function m4id(){return new Float32Array([1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1]);}
 function m4mul(a,b){const o=new Float32Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];o[c*4+r]=s;}return o;}
 function m4persp(fov,asp,n,f){const t=1/Math.tan(fov/2);return new Float32Array([t/asp,0,0,0,0,t,0,0,0,0,(f+n)/(n-f),-1,0,0,2*f*n/(n-f),0]);}
@@ -204,7 +250,7 @@ function m4view(ex,ey,ez,yaw,pitch){
     -(rX*ex+rY*ey+rZ*ez),-(uX*ex+uY*ey+uZ*ez),(fX*ex+fY*ey+fZ*ez),1]);
 }
 
-// ── GEOMETRY ─────────────────────────────────────────────────────
+// ── GEOMETRY ──────────────────────────────────────────────────────
 function zCol(c,r,type){
   const zx=c/MC,zy=r/MR;let b;
   if(zx<.33&&zy<.5)b=[.30,.38,.28];
@@ -241,98 +287,131 @@ for(let r=0;r<MR;r++)for(let c=0;c<MC;c++){
 }
 const WVB=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,WVB);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(VD),gl.STATIC_DRAW);
 const WIB=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,WIB);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(IX),gl.STATIC_DRAW);
-const WNIX=IX.length, STR=24;
+const WNIX=IX.length,STR=24;
 
-// Sphere
+// Sphere (ghost, players, batteries)
 function mkSph(seg){const p=[],n=[],i=[];for(let a=0;a<=seg;a++){const phi=Math.PI*a/seg;for(let b=0;b<=seg;b++){const th=2*Math.PI*b/seg;const x=Math.sin(phi)*Math.cos(th),y=Math.cos(phi),z=Math.sin(phi)*Math.sin(th);p.push(x,y,z);n.push(x,y,z);}}for(let a=0;a<seg;a++)for(let b=0;b<seg;b++){const v=a*(seg+1)+b,w=v+seg+1;i.push(v,w,v+1,w,w+1,v+1);}return{p:new Float32Array(p),n:new Float32Array(n),i:new Uint16Array(i),cnt:i.length};}
 const SPH=mkSph(32);
 const SPB=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,SPB);gl.bufferData(gl.ARRAY_BUFFER,SPH.p,gl.STATIC_DRAW);
 const SNB=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,SNB);gl.bufferData(gl.ARRAY_BUFFER,SPH.n,gl.STATIC_DRAW);
 const SIB=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,SIB);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,SPH.i,gl.STATIC_DRAW);
 
-// ── GAME STATE ───────────────────────────────────────────────────
-const EYE=0.52*CELL, GR=0.33*CELL;
+// Parse "hsl(H,S%,L%)" or any css color into [r,g,b] 0-1
+function parseColor(css){
+  const m=css.match(/hsl\((\d+),\s*(\d+)%,\s*(\d+)%\)/);
+  if(m){
+    let h=+m[1]/360,s=+m[2]/100,l=+m[3]/100;
+    let r,g,b;
+    if(s===0){r=g=b=l;}else{
+      const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;
+      function hue(t){if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;}
+      r=hue(h+1/3);g=hue(h);b=hue(h-1/3);
+    }
+    return[r,g,b];
+  }
+  return[0.5,0.8,0.5];
+}
+
+// ── GAME STATE ────────────────────────────────────────────────────
+const EYE=0.52*CELL,GR=0.33*CELL;
 const P={x:4*CELL,y:EYE,z:4*CELL,yaw:0,pitch:0,battery:1,flashOn:true,lives:3,bobT:0,bobAmt:0,alive:true};
+// Ghost world position (for rendering)
 const G={x:0,y:GR,z:0,hp:100,visible:false,minimapVis:false};
-let others=[], bats=[], litAmt=0;
-let myRole=null, inGame=false, gameOver=false, locked=false, started=false;
-let mDX=0, mDY=0;
+let others=[],bats=[],litAmt=0;
+let myRole=null,inGame=false,gameOver=false,locked=false,started=false;
+let mDX=0,mDY=0;
 const keys={};
 
-// ── COLLISION ────────────────────────────────────────────────────
+// ── COLLISION ─────────────────────────────────────────────────────
 const PR=0.28*CELL;
 function solid(x,z){const c=Math.floor(x/CELL),r=Math.floor(z/CELL);return r<0||r>=MR||c<0||c>=MC||!!MAP[r][c];}
 function canWalk(x,z){return!solid(x-PR,z-PR)&&!solid(x+PR,z-PR)&&!solid(x-PR,z+PR)&&!solid(x+PR,z+PR);}
 function tryMove(nx,nz){if(canWalk(nx,nz)){P.x=nx;P.z=nz;}else if(canWalk(nx,P.z)){P.x=nx;}else if(canWalk(P.x,nz)){P.z=nz;}}
 
-// ── SOCKET ───────────────────────────────────────────────────────
+// ── SOCKET ────────────────────────────────────────────────────────
 const socket=io(SERVER_URL,{transports:['websocket'],reconnection:true});
 socket.on('connect',()=>console.log('connected',socket.id));
 socket.on('disconnect',()=>notif('Disconnected','#f77'));
 
-socket.on('lobby:state',({players})=>{
-  updateLobbyUI(players);
-});
+socket.on('lobby:state',({players})=>updateLobbyUI(players));
 
 socket.on('game:start',({players})=>{
   const me=players.find(p=>p.id===socket.id)||players[0];
   myRole=me.role;
-  // Set spawn
-  if(me.x!==undefined){P.x=me.x;P.z=me.z;P.y=EYE;}
-  else{
-    const sp=OPEN[Math.floor(Math.random()*OPEN.length)];
-    P.x=(sp.c+.5)*CELL; P.z=(sp.r+.5)*CELL; P.y=EYE;
-  }
-  P.yaw=Math.atan2(MC*CELL/2-P.x, MR*CELL/2-P.z);
+  if(me.x!==undefined&&me.x!==0){P.x=me.x;P.z=me.z;}
+  else{const sp=OPEN[Math.floor(Math.random()*OPEN.length)];P.x=(sp.c+.5)*CELL;P.z=(sp.r+.5)*CELL;}
+  P.y=EYE;
+  P.yaw=Math.atan2(MC*CELL/2-P.x,MR*CELL/2-P.z);
   startGame(players);
 });
 
 socket.on('game:state',(pkt)=>{
   if(!inGame||gameOver)return;
-  if(pkt.ghost){G.visible=pkt.ghost.visible;G.minimapVis=pkt.ghost.minimapVis;G.hp=pkt.ghost.hp;}
+  // Ghost visibility flags
+  if(pkt.ghost){
+    G.hp=pkt.ghost.hp;
+    G.visible=pkt.ghost.visible;
+    G.minimapVis=pkt.ghost.minimapVis;
+  }
   if(pkt.batteries)bats=pkt.batteries;
   if(pkt.litAmt!==undefined)litAmt=pkt.litAmt;
+
+  // My authoritative state
   const me=pkt.players&&pkt.players.find(p=>p.id===socket.id);
   if(me){P.battery=me.battery;P.flashOn=me.flashOn;P.lives=me.lives;P.alive=me.alive;}
-  const ghost=pkt.players&&pkt.players.find(p=>p.role==='ghost');
-  if(ghost){G.x=ghost.x;G.z=ghost.z;G.y=ghost.y||GR;}
-  others=(pkt.players||[]).filter(p=>p.id!==socket.id&&p.alive);
-  // Proximity vignette
+
+  // Ghost world position from ghost player
+  const ghostP=pkt.players&&pkt.players.find(p=>p.role==='ghost');
+  if(ghostP){G.x=ghostP.x;G.z=ghostP.z;G.y=ghostP.y||GR;}
+
+  // All other players (exclude self)
+  others=(pkt.players||[]).filter(p=>p.id!==socket.id);
+
+  // Proximity vignette for hunters — white fill from edges
   if(myRole==='hunter'&&pkt.ghostDist!==undefined){
-    const n=Math.max(0,1-pkt.ghostDist/(6*CELL));
-    const intens=Math.pow(n,2)*0.55;
-    const el=document.getElementById('prox');
-    el.style.background=`radial-gradient(ellipse at center,transparent 45%,rgba(220,235,255,${intens}) 100%)`;
-    el.style.opacity=intens>0.02?'1':'0';
+    const maxD=7*CELL;
+    const n=Math.max(0,1-pkt.ghostDist/maxD);
+    const intens=Math.pow(n,2.2)*0.7; // 0 when far, up to 0.7 when touching
+    const prox=document.getElementById('prox');
+    if(intens>0.01){
+      // White vignette fills inward — closer = fills more toward center
+      const stopPct=Math.max(10,70-intens*65); // shrinks center safe zone
+      prox.style.background=`radial-gradient(ellipse at center, transparent ${stopPct.toFixed(0)}%, rgba(255,255,255,${(intens*0.8).toFixed(2)}) 100%)`;
+      prox.style.opacity='1';
+    } else {
+      prox.style.opacity='0';
+    }
   }
+
   updateHUD();
   updateOtherCards();
 });
 
 socket.on('lightning:strike',()=>{
-  litAmt=1.0;G.visible=true;G.minimapVis=true;
+  litAmt=1.0;
+  // Temporarily show ghost on minimap
+  G.minimapVis=true;
   const f=document.getElementById('litflash');
-  f.style.background='rgba(200,230,255,.18)';
-  setTimeout(()=>{f.style.background='rgba(200,230,255,0)';G.visible=false;},750);
+  f.style.background='rgba(200,230,255,.2)';
+  setTimeout(()=>{f.style.background='rgba(200,230,255,0)';},600);
   setTimeout(()=>{G.minimapVis=false;},2300);
   notif('⚡ Lightning!','#ccf');
 });
 socket.on('battery:pickup',()=>notif('⚡ Battery refilled!','#af8'));
 socket.on('hunter:hit',({lives})=>notif(`💀 Hit! ${lives} lives left`,'#f87'));
 socket.on('hunter:eliminated',({hunterId})=>{
-  if(hunterId===socket.id)notif('💀 You are eliminated!','#f44');
-  else notif('A hunter was eliminated!','#fa4');
+  notif(hunterId===socket.id?'💀 You are eliminated!':'A hunter was eliminated!',hunterId===socket.id?'#f44':'#fa4');
 });
 socket.on('ghost:hit',({hp})=>{if(myRole==='ghost')notif(`💥 Hit! HP:${hp.toFixed(0)}`,'#f87');});
 socket.on('game:end',({winner})=>{
   gameOver=true;inGame=false;
-  const el=document.getElementById('go'),t=document.getElementById('go-title');
+  const t=document.getElementById('go-title');
   t.textContent=winner==='hunters'?'👻 Ghost Defeated!':'💀 Ghost Wins!';
   t.style.color=winner==='hunters'?'#8fd':'#f77';
-  el.style.display='flex';
+  document.getElementById('go').style.display='flex';
 });
 
-// ── LOBBY UI ─────────────────────────────────────────────────────
+// ── LOBBY UI ──────────────────────────────────────────────────────
 let isReady=false;
 function updateLobbyUI(players){
   const inJoin=document.getElementById('panel-join').style.display!=='none';
@@ -347,7 +426,6 @@ function updateLobbyUI(players){
   const rc=players.filter(p=>p.ready).length;
   statEl.textContent=players.length<2?`Waiting for players (${players.length}/2 min)…`:`${rc}/${players.length} ready — all must ready to start`;
 }
-
 function backToMain(){
   document.getElementById('panel-lobby').style.display='none';
   document.getElementById('panel-join').style.display='none';
@@ -381,43 +459,39 @@ function doReady(){
   isReady=!isReady;
   socket.emit('room:ready',{ready:isReady});
   document.querySelectorAll('#ready-btn,#join-ready-btn').forEach(b=>{
-    b.textContent=isReady?'⏳ Waiting for others…':'✅ Ready Up';
+    b.textContent=isReady?'⏳ Waiting…':'✅ Ready Up';
     b.style.opacity=isReady?'.55':'1';
   });
 }
 
-// ── START GAME ───────────────────────────────────────────────────
+// ── GAME START ────────────────────────────────────────────────────
 function startGame(players){
   inGame=true;
   document.getElementById('menu').style.display='none';
   document.getElementById('hud').style.display='block';
   document.getElementById('minimap').style.display='block';
-
   const rb=document.getElementById('rolebadge');
   if(myRole==='ghost'){
     rb.textContent='👻 YOU ARE THE GHOST';rb.style.color='#c8a8f8';rb.style.borderColor='#5a3a8a';
     document.getElementById('ghosthud').style.display='block';
     document.getElementById('bat-wrap').style.display='none';
     document.getElementById('lives').style.display='none';
+    // Ghost doesn't need ghost HP bar either (they know their own HP)
   } else {
     rb.textContent='🔦 HUNTER';rb.style.color='#8aee8a';rb.style.borderColor='#2a6a2a';
   }
-
   canvas.addEventListener('click',()=>{
     if(!locked){canvas.requestPointerLock();return;}
     if(!started||gameOver)return;
-    if(myRole==='hunter')socket.emit('input',{attack:true,yaw:P.yaw,pitch:P.pitch});
+    if(myRole==='hunter')socket.emit('input',{attack:true,yaw:P.yaw,pitch:P.pitch,flashOn:P.flashOn});
   });
   document.addEventListener('pointerlockchange',()=>{
     locked=!!document.pointerLockElement;
-    if(locked){
-      started=true;
-      document.getElementById('clicktip').style.display='none';
-    }
+    if(locked){started=true;document.getElementById('clicktip').style.display='none';}
   });
 }
 
-// ── HUD ──────────────────────────────────────────────────────────
+// ── HUD ───────────────────────────────────────────────────────────
 function notif(msg,col='#fff'){
   const el=document.getElementById('notif');
   el.textContent=msg;el.style.color=col;el.style.opacity='1';
@@ -425,108 +499,206 @@ function notif(msg,col='#fff'){
 }
 function updateHUD(){
   if(myRole==='hunter'){
+    // Battery bar — NO flicker, just smooth color
+    const pct=P.battery*100;
     const bi=document.getElementById('bat-inner');
-    bi.style.width=(P.battery*100)+'%';
-    const r2=(255*(1-P.battery))|0,g2=(80+180*P.battery)|0;
-    bi.style.background=`linear-gradient(90deg,rgb(${r2},${g2},10),rgb(${(r2*.4)|0},${Math.min(255,g2+40)},10))`;
+    bi.style.width=pct+'%';
+    const r=(255*(1-P.battery))|0, g=(80+170*P.battery)|0;
+    bi.style.background=`rgb(${r},${g},10)`;
+
+    // Lives
     const le=document.getElementById('lives');le.innerHTML='';
     for(let i=0;i<3;i++){const s=document.createElement('span');s.className='heart';s.textContent=i<P.lives?'❤️':'🖤';le.appendChild(s);}
   }
-  const ghp=document.getElementById('ghp-inner');
-  ghp.style.width=Math.max(0,G.hp)+'%';
-  const gr=G.hp<50?255:Math.floor(255*(1-(G.hp-50)/50)),gg=G.hp>50?180:Math.floor(180*G.hp/50);
-  ghp.style.background=`linear-gradient(90deg,rgb(${(gr*.6)|0},${(gg*.5)|0},0),rgb(${gr},${gg},20))`;
+  // Ghost HP bar (visible to hunters only)
+  if(myRole!=='ghost'){
+    const ghp=document.getElementById('ghp-inner');
+    ghp.style.width=Math.max(0,G.hp)+'%';
+    const gr=G.hp<50?255:Math.floor(255*(1-(G.hp-50)/50)),gg=G.hp>50?180:Math.floor(180*G.hp/50);
+    ghp.style.background=`linear-gradient(90deg,rgb(${(gr*.6)|0},${(gg*.5)|0},0),rgb(${gr},${gg},20))`;
+  }
 }
 function updateOtherCards(){
   const el=document.getElementById('otherl');el.innerHTML='';
   for(const p of others){
     const c=document.createElement('div');c.className='ocard';
-    c.innerHTML=`<span style="color:${p.color}">${p.role==='ghost'?'👻':'🔦'}</span> ${p.name}`;
+    const icon=p.role==='ghost'?'👻':'🔦';
+    const dead=p.alive===false?' 💀':'';
+    c.innerHTML=`<span style="color:${p.color}">${icon}</span> ${p.name}${dead}`;
     el.appendChild(c);
   }
 }
 
-// ── MINIMAP ──────────────────────────────────────────────────────
+// ── MINIMAP ───────────────────────────────────────────────────────
 const mmC=document.getElementById('minimap'),mmX=mmC.getContext('2d');
 const MMW=208,MMH=128,cw=MMW/MC,ch=MMH/MR;
 function drawMinimap(){
   mmX.clearRect(0,0,MMW,MMH);
-  for(let r=0;r<MR;r++)for(let c=0;c<MC;c++){mmX.fillStyle=MAP[r][c]?'#1c2c1c':'#070c05';mmX.fillRect(c*cw,r*ch,cw+.5,ch+.5);}
-  for(const b of bats){mmX.fillStyle='rgba(50,220,60,.85)';mmX.beginPath();mmX.arc(b.x/CELL*cw,b.z/CELL*ch,cw*.9,0,Math.PI*2);mmX.fill();}
-  for(const op of others){if(op.role==='ghost')continue;mmX.fillStyle=op.color||'#8af';mmX.beginPath();mmX.arc(op.x/CELL*cw,op.z/CELL*ch,cw,0,Math.PI*2);mmX.fill();}
-  if(G.visible||G.minimapVis){const p=Math.sin(Date.now()*.005)*.3+.7;mmX.fillStyle=`rgba(100,255,130,${p})`;mmX.beginPath();mmX.arc(G.x/CELL*cw,G.z/CELL*ch,cw*1.8,0,Math.PI*2);mmX.fill();mmX.fillStyle='rgba(210,255,215,.9)';mmX.beginPath();mmX.arc(G.x/CELL*cw,G.z/CELL*ch,cw*.7,0,Math.PI*2);mmX.fill();}
-  mmX.fillStyle='rgba(255,210,40,1)';mmX.beginPath();mmX.arc(P.x/CELL*cw,P.z/CELL*ch,cw*1.2,0,Math.PI*2);mmX.fill();
-  if(myRole==='hunter'){mmX.save();mmX.globalAlpha=.2;mmX.fillStyle='rgba(255,220,60,.8)';mmX.beginPath();mmX.moveTo(P.x/CELL*cw,P.z/CELL*ch);const a=Math.PI/2-P.yaw;mmX.arc(P.x/CELL*cw,P.z/CELL*ch,cw*8,a-Math.PI/3,a+Math.PI/3);mmX.closePath();mmX.fill();mmX.restore();}
+  // Walls
+  for(let r=0;r<MR;r++)for(let c=0;c<MC;c++){
+    mmX.fillStyle=MAP[r][c]?'#1c2c1c':'#070c05';
+    mmX.fillRect(c*cw,r*ch,cw+.5,ch+.5);
+  }
+  // Batteries
+  for(const b of bats){
+    mmX.fillStyle='rgba(50,220,60,.85)';
+    mmX.beginPath();mmX.arc(b.x/CELL*cw,b.z/CELL*ch,cw*.9,0,Math.PI*2);mmX.fill();
+  }
+
+  // Ghost is always visible on minimap IF you are the ghost
+  // Otherwise only visible during lightning
+  const showGhost = myRole==='ghost' || G.minimapVis;
+  if(showGhost){
+    const pulse=Math.sin(Date.now()*.005)*.3+.7;
+    mmX.fillStyle=`rgba(100,255,130,${pulse})`;
+    mmX.beginPath();mmX.arc(G.x/CELL*cw,G.z/CELL*ch,cw*1.8,0,Math.PI*2);mmX.fill();
+    mmX.fillStyle='rgba(210,255,215,.9)';
+    mmX.beginPath();mmX.arc(G.x/CELL*cw,G.z/CELL*ch,cw*.7,0,Math.PI*2);mmX.fill();
+  }
+
+  // Other players — always visible on minimap (hunters see hunters, ghost sees all)
+  for(const op of others){
+    if(op.role==='ghost')continue; // ghost position handled above
+    if(op.alive===false)continue;
+    mmX.fillStyle=op.color||'#8af';
+    mmX.beginPath();mmX.arc(op.x/CELL*cw,op.z/CELL*ch,cw*1.1,0,Math.PI*2);mmX.fill();
+  }
+
+  // Self (yellow dot)
+  mmX.fillStyle='rgba(255,210,40,1)';
+  mmX.beginPath();mmX.arc(P.x/CELL*cw,P.z/CELL*ch,cw*1.3,0,Math.PI*2);mmX.fill();
+
+  // FOV cone (hunters only)
+  if(myRole==='hunter'){
+    mmX.save();mmX.globalAlpha=.18;mmX.fillStyle='rgba(255,220,60,.8)';
+    mmX.beginPath();mmX.moveTo(P.x/CELL*cw,P.z/CELL*ch);
+    const a=Math.PI/2-P.yaw;
+    mmX.arc(P.x/CELL*cw,P.z/CELL*ch,cw*8,a-Math.PI/3,a+Math.PI/3);
+    mmX.closePath();mmX.fill();mmX.restore();
+  }
 }
 
-// ── DRAW WORLD ───────────────────────────────────────────────────
+// ── DRAW FUNCTIONS ────────────────────────────────────────────────
+// Flashlight uniforms — no flicker, battery is a smooth value
 function setFlash(prog){
   const fpx=P.x+Math.sin(P.yaw)*.3,fpz=P.z+Math.cos(P.yaw)*.3;
   const fdx=Math.sin(P.yaw)*Math.cos(P.pitch),fdy=Math.sin(P.pitch),fdz=Math.cos(P.yaw)*Math.cos(P.pitch);
-  const fon=myRole==='hunter'?(P.flashOn?1:0):0;
+  const fon=myRole==='hunter'?(P.flashOn?1.0:0.0):0.0;
+  // Battery is authoritative from server — smooth, no randomness
   gl.uniform3f(gl.getUniformLocation(prog,'uFP'),fpx,P.y,fpz);
   gl.uniform3f(gl.getUniformLocation(prog,'uFD'),fdx,fdy,fdz);
   gl.uniform1f(gl.getUniformLocation(prog,'uFOn'),fon);
-  gl.uniform1f(gl.getUniformLocation(prog,'uFBat'),P.battery);
+  gl.uniform1f(gl.getUniformLocation(prog,'uFBat'),Math.max(0,P.battery));
   gl.uniform1f(gl.getUniformLocation(prog,'uLit'),litAmt);
 }
+
 function drawWorld(VP){
-  gl.useProgram(wP);
-  gl.uniformMatrix4fv(gl.getUniformLocation(wP,'uVP'),false,VP);
-  setFlash(wP);
+  gl.useProgram(wProg);
+  gl.uniformMatrix4fv(gl.getUniformLocation(wProg,'uVP'),false,VP);
+  setFlash(wProg);
   gl.bindBuffer(gl.ARRAY_BUFFER,WVB);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,WIB);
-  const aP=gl.getAttribLocation(wP,'aP'),aC=gl.getAttribLocation(wP,'aC');
+  const aP=gl.getAttribLocation(wProg,'aP'),aC=gl.getAttribLocation(wProg,'aC');
   gl.enableVertexAttribArray(aP);gl.vertexAttribPointer(aP,3,gl.FLOAT,false,STR,0);
   gl.enableVertexAttribArray(aC);gl.vertexAttribPointer(aC,3,gl.FLOAT,false,STR,12);
   gl.drawElements(gl.TRIANGLES,WNIX,gl.UNSIGNED_SHORT,0);
   gl.disableVertexAttribArray(aP);gl.disableVertexAttribArray(aC);
 }
+
+// Draw ghost blob (only if visible to this player)
 function drawGhost(VP,ts){
   if(myRole==='ghost'||!G.visible)return;
-  gl.useProgram(gP);
+  gl.useProgram(gProg);
   const gy=G.y+Math.sin(ts*.0018)*.055;
   const M=m4mul(m4tr(G.x,gy,G.z),m4sc(GR,GR,GR));
-  gl.uniformMatrix4fv(gl.getUniformLocation(gP,'uMVP'),false,m4mul(VP,M));
-  gl.uniformMatrix4fv(gl.getUniformLocation(gP,'uM'),false,M);
-  gl.uniform3f(gl.getUniformLocation(gP,'uCam'),P.x,P.y,P.z);
-  gl.uniform1f(gl.getUniformLocation(gP,'uTime'),ts*.001);
-  setFlash(gP);
-  gl.bindBuffer(gl.ARRAY_BUFFER,SPB);const sp=gl.getAttribLocation(gP,'aP');gl.enableVertexAttribArray(sp);gl.vertexAttribPointer(sp,3,gl.FLOAT,false,0,0);
-  gl.bindBuffer(gl.ARRAY_BUFFER,SNB);const sn=gl.getAttribLocation(gP,'aN');gl.enableVertexAttribArray(sn);gl.vertexAttribPointer(sn,3,gl.FLOAT,false,0,0);
+  gl.uniformMatrix4fv(gl.getUniformLocation(gProg,'uMVP'),false,m4mul(VP,M));
+  gl.uniformMatrix4fv(gl.getUniformLocation(gProg,'uM'),false,M);
+  gl.uniform3f(gl.getUniformLocation(gProg,'uCam'),P.x,P.y,P.z);
+  gl.uniform1f(gl.getUniformLocation(gProg,'uTime'),ts*.001);
+  setFlash(gProg);
+  gl.bindBuffer(gl.ARRAY_BUFFER,SPB);const sp=gl.getAttribLocation(gProg,'aP');gl.enableVertexAttribArray(sp);gl.vertexAttribPointer(sp,3,gl.FLOAT,false,0,0);
+  gl.bindBuffer(gl.ARRAY_BUFFER,SNB);const sn=gl.getAttribLocation(gProg,'aN');gl.enableVertexAttribArray(sn);gl.vertexAttribPointer(sn,3,gl.FLOAT,false,0,0);
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,SIB);
   gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);
   gl.drawElements(gl.TRIANGLES,SPH.cnt,gl.UNSIGNED_SHORT,0);
   gl.depthMask(true);gl.disable(gl.BLEND);
   gl.disableVertexAttribArray(sp);gl.disableVertexAttribArray(sn);
 }
+
+// Draw other players as colored spheres
+// Ghost sees ALL hunters. Hunters see other hunters. Nobody except ghost sees ghost sphere.
+function drawOtherPlayers(VP){
+  if(!others.length)return;
+  gl.useProgram(pProg);
+  setFlash(pProg);
+  gl.bindBuffer(gl.ARRAY_BUFFER,SPB);
+  const sp=gl.getAttribLocation(pProg,'aP');gl.enableVertexAttribArray(sp);gl.vertexAttribPointer(sp,3,gl.FLOAT,false,0,0);
+  gl.bindBuffer(gl.ARRAY_BUFFER,SNB);
+  const sn=gl.getAttribLocation(pProg,'aN');gl.enableVertexAttribArray(sn);gl.vertexAttribPointer(sn,3,gl.FLOAT,false,0,0);
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,SIB);
+
+  for(const op of others){
+    // Skip dead players
+    if(op.alive===false)continue;
+    // Hunters skip the ghost player — ghost renders via drawGhost()
+    if(op.role==='ghost'&&myRole!=='ghost')continue;
+    // If I am the ghost, I see all hunters as colored spheres (always)
+    // If I am a hunter, I see other hunters as colored spheres (always)
+
+    const rgb=parseColor(op.color||'hsl(120,70%,55%)');
+    const px=op.x, py=(op.y||EYE), pz=op.z;
+    const sz=0.18*CELL; // visible sphere size
+    const M=m4mul(m4tr(px,py,pz),m4sc(sz,sz,sz));
+    gl.uniformMatrix4fv(gl.getUniformLocation(pProg,'uMVP'),false,m4mul(VP,M));
+    gl.uniformMatrix4fv(gl.getUniformLocation(pProg,'uM'),false,M);
+    gl.uniform3f(gl.getUniformLocation(pProg,'uCol'),rgb[0],rgb[1],rgb[2]);
+    gl.drawElements(gl.TRIANGLES,SPH.cnt,gl.UNSIGNED_SHORT,0);
+  }
+  gl.disableVertexAttribArray(sp);gl.disableVertexAttribArray(sn);
+}
+
+// Batteries
 function drawBats(VP,ts){
   if(!bats.length)return;
-  gl.useProgram(bP);gl.uniform1f(gl.getUniformLocation(bP,'uT'),ts*.004);
-  gl.bindBuffer(gl.ARRAY_BUFFER,SPB);const bp=gl.getAttribLocation(bP,'aP');gl.enableVertexAttribArray(bp);gl.vertexAttribPointer(bp,3,gl.FLOAT,false,0,0);
+  gl.useProgram(bProg);gl.uniform1f(gl.getUniformLocation(bProg,'uT'),ts*.004);
+  gl.bindBuffer(gl.ARRAY_BUFFER,SPB);const bp=gl.getAttribLocation(bProg,'aP');gl.enableVertexAttribArray(bp);gl.vertexAttribPointer(bp,3,gl.FLOAT,false,0,0);
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,SIB);
   gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.depthMask(false);
-  for(const b of bats){const M=m4mul(m4tr(b.x,b.y,b.z),m4sc(.11,.11,.11));gl.uniformMatrix4fv(gl.getUniformLocation(bP,'uMVP'),false,m4mul(VP,M));gl.drawElements(gl.TRIANGLES,SPH.cnt,gl.UNSIGNED_SHORT,0);}
+  for(const b of bats){
+    const M=m4mul(m4tr(b.x,b.y||(.55*CELL),b.z),m4sc(.11,.11,.11));
+    gl.uniformMatrix4fv(gl.getUniformLocation(bProg,'uMVP'),false,m4mul(VP,M));
+    gl.drawElements(gl.TRIANGLES,SPH.cnt,gl.UNSIGNED_SHORT,0);
+  }
   gl.depthMask(true);gl.disable(gl.BLEND);gl.disableVertexAttribArray(bp);
 }
 
-// ── INPUT ────────────────────────────────────────────────────────
-document.addEventListener('keydown',e=>{keys[e.code]=true;if(!started||gameOver)return;if(e.code==='KeyF'&&myRole==='hunter')P.flashOn=!P.flashOn;e.preventDefault();});
+// ── INPUT ─────────────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  keys[e.code]=true;
+  if(!started||gameOver)return;
+  if(e.code==='KeyF'&&myRole==='hunter'){P.flashOn=!P.flashOn;}
+  e.preventDefault();
+});
 document.addEventListener('keyup',e=>keys[e.code]=false);
 document.addEventListener('mousemove',e=>{if(locked){mDX+=e.movementX;mDY+=e.movementY;}});
 
-// ── MAIN LOOP ────────────────────────────────────────────────────
+// ── MAIN LOOP ─────────────────────────────────────────────────────
 let last=0,inputT=0;
 function loop(ts){
   const dt=Math.min((ts-last)/1000,.05);last=ts;
   requestAnimationFrame(loop);
 
+  // Always render world
   gl.viewport(0,0,canvas.width,canvas.height);
   gl.clearColor(.06,.08,.05,1);
   gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
-
-  // Always compute a valid VP so we can at least render the world
   const VP=m4mul(m4persp(Math.PI/2,canvas.width/canvas.height,.05,80),m4view(P.x,P.y,P.z,P.yaw,P.pitch));
   drawWorld(VP);
+  if(inGame&&!gameOver){
+    drawBats(VP,ts);
+    drawGhost(VP,ts);
+    drawOtherPlayers(VP);
+    drawMinimap();
+  }
 
   if(!inGame||!started||gameOver)return;
 
@@ -534,7 +706,6 @@ function loop(ts){
   P.yaw+=mDX*.002;mDX=0;
   P.pitch+=mDY*.0018;mDY=0;
   P.pitch=Math.max(-1.05,Math.min(1.05,P.pitch));
-
   const spd=2.2*dt,sY=Math.sin(P.yaw),cY=Math.cos(P.yaw);
   let dx=0,dz=0,mv=false;
   if(keys['KeyW']||keys['ArrowUp']){dx+=sY*spd;dz+=cY*spd;mv=true;}
@@ -542,22 +713,21 @@ function loop(ts){
   if(keys['KeyA']){dx-=cY*spd*.78;dz+=sY*spd*.78;mv=true;}
   if(keys['KeyD']){dx+=cY*spd*.78;dz-=sY*spd*.78;mv=true;}
   if(mv)tryMove(P.x+dx,P.z+dz);
-
   if(mv){P.bobT+=dt*5.5;P.bobAmt=Math.min(1,P.bobAmt+dt*5);}else P.bobAmt=Math.max(0,P.bobAmt-dt*8);
   P.y=EYE+P.bobAmt*Math.sin(P.bobT)*.028;
 
-  // Local battery preview
-  if(myRole==='hunter'&&P.flashOn)P.battery=Math.max(0,P.battery-dt*.014);
-  if(P.battery<=0&&myRole==='hunter')P.flashOn=false;
+  // Local battery preview (smooth, no flicker)
+  if(myRole==='hunter'){
+    if(P.flashOn)P.battery=Math.max(0,P.battery-dt*.014);
+    if(P.battery<=0)P.flashOn=false;
+  }
 
   // Send to server ~30Hz
   inputT+=dt;
-  if(inputT>=.033){inputT=0;socket.emit('input',{dx,dz,yaw:P.yaw,pitch:P.pitch,flashOn:P.flashOn});}
-
-  const VP2=m4mul(m4persp(Math.PI/2,canvas.width/canvas.height,.05,80),m4view(P.x,P.y,P.z,P.yaw,P.pitch));
-  drawBats(VP2,ts);
-  drawGhost(VP2,ts);
-  drawMinimap();
+  if(inputT>=.033){
+    inputT=0;
+    socket.emit('input',{dx,dz,yaw:P.yaw,pitch:P.pitch,flashOn:P.flashOn});
+  }
 }
 requestAnimationFrame(loop);
 </script>
