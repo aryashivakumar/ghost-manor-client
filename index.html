@@ -9,7 +9,8 @@ body{background:#060a05;overflow:hidden;font-family:'Georgia',serif;color:#c8e8c
 canvas#c{display:block;width:100vw;height:100vh;position:fixed;top:0;left:0;}
 
 /* ── SCREENS ── */
-#screens{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;}
+#screens{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+.screen{pointer-events:auto;}
 .screen{display:none;flex-direction:column;align-items:center;gap:14px;background:rgba(4,10,4,.92);border:1px solid #1a3a1a;border-radius:12px;padding:40px 48px;min-width:340px;box-shadow:0 0 60px rgba(0,60,0,.4);}
 .screen.active{display:flex;}
 .screen h1{font-size:38px;color:#6adf6a;text-shadow:0 0 24px rgba(0,200,0,.5);letter-spacing:3px;margin-bottom:6px;}
@@ -195,6 +196,7 @@ function setScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + id).classList.add('active');
   document.getElementById('screens').style.display = 'flex';
+  document.getElementById('screens').style.background = 'none';
 }
 
 // ── LOBBY STATE ──────────────────────────────────────────────────
@@ -401,6 +403,7 @@ function startGame(me, allPlayers) {
   inGame = true;
   myRole = me.role;
   document.getElementById('screens').style.display = 'none';
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('hud').style.display = 'block';
   document.getElementById('minimap').style.display = 'block';
 
@@ -650,11 +653,21 @@ function loop(ts) {
   const dt = Math.min((ts - last) / 1000, 0.05); last = ts;
   requestAnimationFrame(loop);
 
-  if (!inGame || !started || gameOver) {
-    // Still render the world as background
+  if (!inGame || gameOver) {
+    // Render dark world as background on menu screens
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.clearColor(0.03, 0.05, 0.02, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    return;
+  }
+
+  // After game starts, render immediately even before pointer lock
+  if (!started) {
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0.06, 0.08, 0.05, 1);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    const VP2 = m4mul(m4persp(Math.PI/2, canvas.width/canvas.height, 0.05, 80), m4view(P.x, P.y, P.z, P.yaw, P.pitch));
+    drawWorld(VP2);
     return;
   }
 
