@@ -709,7 +709,7 @@ function drawBats(VP,ts){
 // ── INPUT ─────────────────────────────────────────────────────────
 document.addEventListener('keydown',e=>{
   keys[e.code]=true;
-  if(!started||gameOver)return;
+  if(!inGame||gameOver)return;
   if(e.code==='KeyF'&&myRole==='hunter'){P.flashOn=!P.flashOn;}
   e.preventDefault();
 });
@@ -735,12 +735,17 @@ function loop(ts){
     drawMinimap();
   }
 
-  if(!inGame||!started||gameOver)return;
+  if(!inGame||gameOver)return;
 
-  // Movement
-  P.yaw+=mDX*.002;mDX=0;
-  P.pitch+=mDY*.0018;mDY=0;
-  P.pitch=Math.max(-1.05,Math.min(1.05,P.pitch));
+  // Mouse look — only when pointer is locked
+  if(locked){
+    P.yaw+=mDX*.002;
+    P.pitch+=mDY*.0018;
+    P.pitch=Math.max(-1.05,Math.min(1.05,P.pitch));
+  }
+  mDX=0;mDY=0;
+
+  // Movement — always active once game starts (don't require pointer lock)
   const spd=2.2*dt,sY=Math.sin(P.yaw),cY=Math.cos(P.yaw);
   let dx=0,dz=0,mv=false;
   if(keys['KeyW']||keys['ArrowUp']){dx+=sY*spd;dz+=cY*spd;mv=true;}
@@ -754,7 +759,7 @@ function loop(ts){
   // Battery: server is authoritative, no local drain here
   // (P.battery is set from server game:state packets)
 
-  // Send to server ~30Hz
+  // Always send position to server ~30Hz
   inputT+=dt;
   if(inputT>=.033){
     inputT=0;
