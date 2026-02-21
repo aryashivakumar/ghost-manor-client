@@ -336,17 +336,37 @@ socket.on('disconnect',()=>notif('Disconnected','#f77'));
 socket.on('lobby:state',({players})=>updateLobbyUI(players));
 
 socket.on('game:start',({players})=>{
-  const me=players.find(p=>p.id===socket.id)||players[0];
+  console.log('[game:start] my socket.id=',socket.id,'players=',JSON.stringify(players.map(p=>({id:p.id,role:p.role,x:p.x,z:p.z}))));
+  const me=players.find(p=>p.id===socket.id);
+  if(!me){ console.error('[game:start] ERROR: could not find self in player list!'); return; }
   myRole=me.role;
-  if(me.x!==undefined&&me.x!==0){P.x=me.x;P.z=me.z;}
-  else{const sp=OPEN[Math.floor(Math.random()*OPEN.length)];P.x=(sp.c+.5)*CELL;P.z=(sp.r+.5)*CELL;}
+  // Always use server spawn position if valid (>0.1), otherwise pick random open cell
+  if(me.x!=null && (Math.abs(me.x)>0.1||Math.abs(me.z)>0.1)){
+    P.x=me.x; P.z=me.z;
+    console.log('[game:start] using server spawn:',P.x,P.z);
+  } else {
+    const sp=OPEN[Math.floor(Math.random()*OPEN.length)];
+    P.x=(sp.c+.5)*CELL; P.z=(sp.r+.5)*CELL;
+    console.warn('[game:start] server gave zero spawn, using random:',P.x,P.z);
+  }
   P.y=EYE;
-  P.yaw=Math.atan2(MC*CELL/2-P.x,MR*CELL/2-P.z);
+  P.yaw=Math.atan2(MC*CELL/2-P.x, MR*CELL/2-P.z);
   startGame(players);
 });
 
 socket.on('game:state',(pkt)=>{
   if(!inGame||gameOver)return;
+
+  // DEBUG — remove after confirming working
+  if(!socket._dbg){ socket._dbg=0; }
+  socket._dbg++;
+  if(socket._dbg<=3||socket._dbg%60===0){
+    console.log('[game:state #'+socket._dbg+'] players:',
+      (pkt.players||[]).map(p=>p.id.slice(-4)+':'+p.role+'@('+p.x.toFixed(1)+','+p.z.toFixed(1)+')'),
+      'ghostVisible:',pkt.ghostVisible,'ghostMinimap:',pkt.ghostMinimap,
+      'ghostHp:',pkt.ghostHp,'myId:',pkt.myId
+    );
+  }
 
   // New flat packet format from server
   G.visible = !!pkt.ghostVisible;
