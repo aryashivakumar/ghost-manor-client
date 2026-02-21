@@ -61,6 +61,9 @@ button:hover{background:linear-gradient(180deg,#236a23,#155015);color:#aef8ae;}
 #go p{color:rgba(255,255,255,.45);font-size:13px;letter-spacing:2px;}
 #go button{width:auto;}
 #litflash{position:fixed;inset:0;background:rgba(200,230,255,0);pointer-events:none;transition:background .05s;z-index:5;}
+#downed{background:rgba(0,0,0,0);}
+@keyframes wipeDown{0%{clip-path:inset(0 0 100% 0);opacity:1}100%{clip-path:inset(0 0 0% 0);opacity:1}}
+@keyframes wipeUp{0%{clip-path:inset(100% 0 0 0);opacity:1}100%{clip-path:inset(0% 0 0 0);opacity:1}}
 </style>
 </head>
 <body>
@@ -110,6 +113,7 @@ button:hover{background:linear-gradient(180deg,#236a23,#155015);color:#aef8ae;}
   <div id="clicktip">Click canvas to start · WASD Move · Mouse Look · F Flashlight · Click Attack</div>
 </div>
 <div id="litflash"></div>
+<div id="downed" style="display:none;position:fixed;inset:0;z-index:50;pointer-events:none;"></div>
 <div id="go"><h1 id="go-title"></h1><p>Room closed</p><button onclick="location.reload()">Play Again</button></div>
 
 <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
@@ -180,7 +184,7 @@ void main(){
   float cone=smoothstep(.42,.84,spot);
   float att=1./(1.+.10*d+.02*d*d);
   float fl=cone*att*uFOn*uFBat*4.5;
-  vec3 ambBase=mix(vec3(.18,.22,.15),vec3(.85,.88,.82),uLit);vec3 col=vC*(ambBase+vec3(.98,.99,1.)*fl);
+  vec3 ambBase=mix(vec3(.55,.60,.52),vec3(.88,.90,.85),uLit);vec3 col=vC*(ambBase+vec3(.98,.99,1.)*fl);
   float fog=clamp(d/28.,0.,1.);fog*=fog;
   col=mix(clamp(col,0.,1.),vec3(.07,.09,.05),fog*.45);
   gl_FragColor=vec4(col,1.);
@@ -319,6 +323,7 @@ const P={x:4*CELL,y:EYE,z:4*CELL,yaw:0,pitch:0,battery:1,flashOn:true,lives:3,bo
 const G={x:0,y:GR,z:0,hp:100,visible:false,minimapVis:false};
 let others=[],bats=[],litAmt=0;
 let myRole=null,inGame=false,gameOver=false,locked=false,started=false;
+let _smoothBat=1; // smoothed battery for rendering (no flicker)
 let mDX=0,mDY=0;
 const keys={};
 
@@ -375,24 +380,24 @@ socket.on('game:state',(pkt)=>{
   if(pkt.batteries) bats=pkt.batteries;
   if(pkt.litAmt!==undefined) litAmt=pkt.litAmt;
 
-  // My authoritative state from server — accept ALL position/state from server
+  // My state from server — only non-position fields (position is local prediction)
   const me=(pkt.players||[]).find(p=>p.id===socket.id);
   if(me){
-    // Server is fully authoritative — update position, yaw, and all state
-    P.x=me.x; P.z=me.z;
-    if(me.y&&me.y>0) P.y=me.y;
     P.battery=me.battery;
+    _smoothBat=me.battery; // sync smooth bat (no lerp needed, server is clean)
     P.flashOn=me.flashOn;
     P.lives=me.lives;
     P.alive=me.alive;
+    // Downed state
+    if(me.downed && !P._wasDown){ P._wasDown=true; showDownedScreen(); }
+    if(!me.downed){ P._wasDown=false; document.getElementById('downed').style.display='none'; }
   }
+  // Others: show downed players differently
+  others=(pkt.players||[]).filter(p=>p.id!==socket.id && p.role!=='ghost');
 
   // Ghost position — from the ghost player entry
   const ghostP=(pkt.players||[]).find(p=>p.role==='ghost');
   if(ghostP){ G.x=ghostP.x; G.z=ghostP.z; G.y=ghostP.y||GR; }
-
-  // Others = everyone except self AND except ghost (ghost rendered via drawGhost)
-  others=(pkt.players||[]).filter(p=>p.id!==socket.id && p.role!=='ghost');
 
   // Proximity vignette (hunters only)
   if(myRole==='hunter'){
@@ -423,6 +428,14 @@ socket.on('lightning:strike',()=>{
   notif('⚡ Lightning!','#ccf');
 });
 socket.on('battery:pickup',()=>notif('⚡ Battery refilled!','#af8'));
+socket.on('hunter:downed',({hunterId,name})=>{
+  if(hunterId===socket.id){ notif('💀 You are DOWNED! Ally must revive you!','#f55'); }
+  else { notif(`💀 ${name} is DOWNED!`,'#fa4'); }
+});
+socket.on('hunter:revived',({hunterId,name})=>{
+  if(hunterId===socket.id){ notif('💚 Revived!','#af8'); document.getElementById('downed').style.display='none'; P._wasDown=false; }
+  else { notif(`💚 ${name} revived!`,'#af8'); }
+});
 socket.on('hunter:hit',({lives})=>notif(`💀 Hit! ${lives} lives left`,'#f87'));
 socket.on('hunter:eliminated',({hunterId})=>{
   notif(hunterId===socket.id?'💀 You are eliminated!':'A hunter was eliminated!',hunterId===socket.id?'#f44':'#fa4');
@@ -508,7 +521,7 @@ function startGame(players){
   canvas.addEventListener('click',()=>{
     if(!locked){canvas.requestPointerLock();return;}
     if(!started||gameOver)return;
-    if(myRole==='hunter')socket.emit('input',{attack:true,yaw:P.yaw,pitch:P.pitch,flashOn:P.flashOn});
+    if(myRole==='hunter')socket.emit('input',{attack:true,x:P.x,z:P.z,yaw:P.yaw,pitch:P.pitch,flashOn:P.flashOn});
   });
   document.addEventListener('pointerlockchange',()=>{
     locked=!!document.pointerLockElement;
@@ -517,6 +530,24 @@ function startGame(players){
 }
 
 // ── HUD ───────────────────────────────────────────────────────────
+
+// Downed screen — black wipes in from top and bottom to center
+function showDownedScreen(){
+  const d=document.getElementById('downed');
+  d.style.display='block';
+  d.innerHTML=`
+    <div style="position:absolute;top:0;left:0;right:0;height:50%;background:#000;transform:scaleY(0);transform-origin:top;transition:transform 1.2s ease-in;"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;height:50%;background:#000;transform:scaleY(0);transform-origin:bottom;transition:transform 1.2s ease-in;"></div>
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,100,100,0);font-size:22px;letter-spacing:3px;font-family:Georgia,serif;transition:color 1.5s 0.8s;">💀 DOWNED — Ally must revive you</div>
+  `;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    const panels=d.querySelectorAll('div>div');
+    if(panels[0])panels[0].style.transform='scaleY(1)';
+    if(panels[1])panels[1].style.transform='scaleY(1)';
+    if(panels[2])panels[2].style.color='rgba(255,140,140,1)';
+  }));
+}
+
 function notif(msg,col='#fff'){
   const el=document.getElementById('notif');
   el.textContent=msg;el.style.color=col;el.style.opacity='1';
@@ -584,7 +615,7 @@ function drawMinimap(){
     // Show all hunters (others array = all non-ghost players)
     for(const op of others){
       if(op.alive===false)continue;
-      mmX.fillStyle=op.color||'#8af';
+      mmX.fillStyle=op.downed?'rgba(150,150,150,0.5)':(op.color||'#8af');
       mmX.beginPath();mmX.arc(op.x/CELL*cw,op.z/CELL*ch,cw*1.2,0,Math.PI*2);mmX.fill();
     }
 
@@ -602,7 +633,7 @@ function drawMinimap(){
     // Other hunters (colored dots)
     for(const op of others){
       if(op.alive===false)continue;
-      mmX.fillStyle=op.color||'#8af';
+      mmX.fillStyle=op.downed?'rgba(150,150,150,0.5)':(op.color||'#8af');
       mmX.beginPath();mmX.arc(op.x/CELL*cw,op.z/CELL*ch,cw*1.2,0,Math.PI*2);mmX.fill();
     }
 
@@ -631,7 +662,7 @@ function setFlash(prog){
   gl.uniform3f(gl.getUniformLocation(prog,'uFP'),fpx,P.y,fpz);
   gl.uniform3f(gl.getUniformLocation(prog,'uFD'),fdx,fdy,fdz);
   gl.uniform1f(gl.getUniformLocation(prog,'uFOn'),fon);
-  gl.uniform1f(gl.getUniformLocation(prog,'uFBat'),Math.max(0,P.battery));
+  gl.uniform1f(gl.getUniformLocation(prog,'uFBat'),Math.max(0,_smoothBat));
   gl.uniform1f(gl.getUniformLocation(prog,'uLit'),ambientLit);
 }
 
@@ -683,9 +714,9 @@ function drawOtherPlayers(VP){
 
   for(const op of others){
     if(op.alive===false)continue;
-    const rgb=parseColor(op.color||'hsl(120,70%,55%)');
-    const px=op.x, py=(op.y||EYE), pz=op.z;
-    const sz=0.18*CELL;
+    const rgb=op.downed?[0.3,0.3,0.3]:parseColor(op.color||'hsl(120,70%,55%)');
+    const px=op.x, py=op.downed?(.15*CELL):(op.y||EYE), pz=op.z;
+    const sz=op.downed?(0.12*CELL):(0.18*CELL);
     const M=m4mul(m4tr(px,py,pz),m4sc(sz,sz,sz));
     gl.uniformMatrix4fv(gl.getUniformLocation(pProg,'uMVP'),false,m4mul(VP,M));
     gl.uniformMatrix4fv(gl.getUniformLocation(pProg,'uM'),false,M);
@@ -715,6 +746,7 @@ document.addEventListener('keydown',e=>{
   keys[e.code]=true;
   if(!inGame||gameOver)return;
   if(e.code==='KeyF'&&myRole==='hunter'){P.flashOn=!P.flashOn;}
+  if(e.code==='KeyE'&&myRole==='ghost'){socket.emit('input',{ghostAttack:true,x:P.x,z:P.z,yaw:P.yaw,pitch:P.pitch});}
   e.preventDefault();
 });
 document.addEventListener('keyup',e=>keys[e.code]=false);
@@ -769,7 +801,7 @@ function loop(ts){
   if(inputT>=.033){
     inputT=0;
     socket.emit('input',{
-      dx:mvdx, dz:mvdz,
+      x:P.x, z:P.z,
       yaw:P.yaw, pitch:P.pitch,
       flashOn:P.flashOn
     });
