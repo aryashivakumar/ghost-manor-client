@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
 
 export function useInputController(sendInput) {
@@ -6,58 +6,40 @@ export function useInputController(sendInput) {
   const yawRef = useRef(0);
   const flashlightRef = useRef(false);
   const frameRef = useRef(null);
-  const gamePhase = useGameStore(s => s.gamePhase);
-  const localRole = useGameStore(s => s.localRole);
-  const toggleFlashlight = useGameStore(s => s.toggleFlashlight);
-  const flashlightOn = useGameStore(s => s.flashlightOn);
-
-  const onKeyDown = useCallback((e) => {
-    keysRef.current[e.code] = true;
-
-    // Flashlight toggle on click
-    if (e.code === 'KeyF') {
-      toggleFlashlight();
-    }
-  }, [toggleFlashlight]);
-
-  const onKeyUp = useCallback((e) => {
-    keysRef.current[e.code] = false;
-  }, []);
-
-  const onMouseMove = useCallback((e) => {
-    yawRef.current -= e.movementX * 0.002;
-    // Normalize to [-PI, PI]
-    while (yawRef.current > Math.PI) yawRef.current -= 2 * Math.PI;
-    while (yawRef.current < -Math.PI) yawRef.current += 2 * Math.PI;
-  }, []);
-
-  const onMouseDown = useCallback((e) => {
-    if (e.button === 0) {
-      // Left click = toggle flashlight
-      const newState = !flashlightRef.current;
-      flashlightRef.current = newState;
-      useGameStore.getState().flashlightOn = newState;
-    }
-  }, []);
-
-  const requestPointerLock = useCallback(() => {
-    document.body.requestPointerLock?.();
-  }, []);
 
   useEffect(() => {
+    const gamePhase = useGameStore.getState().gamePhase;
     if (gamePhase !== 'playing') return;
+
+    const onKeyDown = (e) => {
+      keysRef.current[e.code] = true;
+    };
+    const onKeyUp = (e) => {
+      keysRef.current[e.code] = false;
+    };
+    const onMouseMove = (e) => {
+      if (!document.pointerLockElement) return;
+      yawRef.current -= e.movementX * 0.002;
+    };
+    const onClick = () => {
+      if (!document.pointerLockElement) {
+        document.body.requestPointerLock();
+      } else {
+        flashlightRef.current = !flashlightRef.current;
+        useGameStore.getState().toggleFlashlight();
+      }
+    };
 
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
     window.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('click', requestPointerLock);
+    window.addEventListener('click', onClick);
 
-    // Input loop at ~60Hz
-    let lastFlashlight = null;
+    let lastFlashlightSent = null;
 
-    const sendLoop = () => {
+    const loop = () => {
       const k = keysRef.current;
-      const currentFlashlight = useGameStore.getState().flashlightOn;
+      const currentFlashlight = flashlightRef.current;
 
       const input = {
         w: !!(k['KeyW'] || k['ArrowUp']),
@@ -70,26 +52,25 @@ export function useInputController(sendInput) {
         revive: !!k['KeyE'],
       };
 
-      // Only send flashlight toggle on change
-      if (currentFlashlight !== lastFlashlight) {
+      if (currentFlashlight !== lastFlashlightSent) {
         input.flashlightToggle = currentFlashlight;
-        lastFlashlight = currentFlashlight;
+        lastFlashlightSent = currentFlashlight;
       }
 
       sendInput(input);
-      frameRef.current = requestAnimationFrame(sendLoop);
+      frameRef.current = requestAnimationFrame(loop);
     };
 
-    frameRef.current = requestAnimationFrame(sendLoop);
+    frameRef.current = requestAnimationFrame(loop);
 
     return () => {
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
       window.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('click', requestPointerLock);
+      window.removeEventListener('click', onClick);
       if (frameRef.current) cancelAnimationFrame(frameRef.current);
     };
-  }, [gamePhase, onKeyDown, onKeyUp, onMouseMove, sendInput]);
+  }, [sendInput]);
 
   return { yawRef };
 }
