@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useGameStore } from '../store/gameStore';
 
-const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'https://ghost-manor-server.onrender.com';
+const SERVER_URL = 'https://ghost-manor-server.onrender.com';
 
 let socketInstance = null;
 
