@@ -364,8 +364,9 @@ socket.on('game:state',(pkt)=>{
   const ghostP=pkt.players&&pkt.players.find(p=>p.role==='ghost');
   if(ghostP){G.x=ghostP.x;G.z=ghostP.z;G.y=ghostP.y||GR;}
 
-  // All other players (exclude self)
-  others=(pkt.players||[]).filter(p=>p.id!==socket.id);
+  // Others = real humans OTHER than self, and never the ghost player
+  // Ghost renders via drawGhost() separately. Self renders as camera POV.
+  others=(pkt.players||[]).filter(p=>p.id!==socket.id && p.role!=='ghost');
 
   // Proximity vignette for hunters — white fill from edges
   if(myRole==='hunter'&&pkt.ghostDist!==undefined){
@@ -520,11 +521,11 @@ function updateHUD(){
 }
 function updateOtherCards(){
   const el=document.getElementById('otherl');el.innerHTML='';
+  // others already excludes self and ghost player, so just show all of them
   for(const p of others){
     const c=document.createElement('div');c.className='ocard';
-    const icon=p.role==='ghost'?'👻':'🔦';
     const dead=p.alive===false?' 💀':'';
-    c.innerHTML=`<span style="color:${p.color}">${icon}</span> ${p.name}${dead}`;
+    c.innerHTML=`<span style="color:${p.color}">🔦</span> ${p.name}${dead}`;
     el.appendChild(c);
   }
 }
@@ -534,42 +535,58 @@ const mmC=document.getElementById('minimap'),mmX=mmC.getContext('2d');
 const MMW=208,MMH=128,cw=MMW/MC,ch=MMH/MR;
 function drawMinimap(){
   mmX.clearRect(0,0,MMW,MMH);
+
   // Walls
   for(let r=0;r<MR;r++)for(let c=0;c<MC;c++){
     mmX.fillStyle=MAP[r][c]?'#1c2c1c':'#070c05';
     mmX.fillRect(c*cw,r*ch,cw+.5,ch+.5);
   }
-  // Batteries
+
+  // Batteries (green dots)
   for(const b of bats){
     mmX.fillStyle='rgba(50,220,60,.85)';
     mmX.beginPath();mmX.arc(b.x/CELL*cw,b.z/CELL*ch,cw*.9,0,Math.PI*2);mmX.fill();
   }
 
-  // Ghost is always visible on minimap IF you are the ghost
-  // Otherwise only visible during lightning
-  const showGhost = myRole==='ghost' || G.minimapVis;
-  if(showGhost){
+  if(myRole==='ghost'){
+    // ── GHOST PERSPECTIVE ──
+    // I AM the ghost — show myself as the pulsing ghost dot (green)
     const pulse=Math.sin(Date.now()*.005)*.3+.7;
     mmX.fillStyle=`rgba(100,255,130,${pulse})`;
-    mmX.beginPath();mmX.arc(G.x/CELL*cw,G.z/CELL*ch,cw*1.8,0,Math.PI*2);mmX.fill();
+    mmX.beginPath();mmX.arc(P.x/CELL*cw,P.z/CELL*ch,cw*1.8,0,Math.PI*2);mmX.fill();
     mmX.fillStyle='rgba(210,255,215,.9)';
-    mmX.beginPath();mmX.arc(G.x/CELL*cw,G.z/CELL*ch,cw*.7,0,Math.PI*2);mmX.fill();
-  }
+    mmX.beginPath();mmX.arc(P.x/CELL*cw,P.z/CELL*ch,cw*.7,0,Math.PI*2);mmX.fill();
 
-  // Other players — always visible on minimap (hunters see hunters, ghost sees all)
-  for(const op of others){
-    if(op.role==='ghost')continue; // ghost position handled above
-    if(op.alive===false)continue;
-    mmX.fillStyle=op.color||'#8af';
-    mmX.beginPath();mmX.arc(op.x/CELL*cw,op.z/CELL*ch,cw*1.1,0,Math.PI*2);mmX.fill();
-  }
+    // Show all hunters (others array = all non-ghost players)
+    for(const op of others){
+      if(op.alive===false)continue;
+      mmX.fillStyle=op.color||'#8af';
+      mmX.beginPath();mmX.arc(op.x/CELL*cw,op.z/CELL*ch,cw*1.2,0,Math.PI*2);mmX.fill();
+    }
 
-  // Self (yellow dot)
-  mmX.fillStyle='rgba(255,210,40,1)';
-  mmX.beginPath();mmX.arc(P.x/CELL*cw,P.z/CELL*ch,cw*1.3,0,Math.PI*2);mmX.fill();
+  } else {
+    // ── HUNTER PERSPECTIVE ──
+    // Ghost dot — only shown during lightning strike
+    if(G.minimapVis){
+      const pulse=Math.sin(Date.now()*.005)*.3+.7;
+      mmX.fillStyle=`rgba(100,255,130,${pulse})`;
+      mmX.beginPath();mmX.arc(G.x/CELL*cw,G.z/CELL*ch,cw*1.8,0,Math.PI*2);mmX.fill();
+      mmX.fillStyle='rgba(210,255,215,.9)';
+      mmX.beginPath();mmX.arc(G.x/CELL*cw,G.z/CELL*ch,cw*.7,0,Math.PI*2);mmX.fill();
+    }
 
-  // FOV cone (hunters only)
-  if(myRole==='hunter'){
+    // Other hunters (colored dots)
+    for(const op of others){
+      if(op.alive===false)continue;
+      mmX.fillStyle=op.color||'#8af';
+      mmX.beginPath();mmX.arc(op.x/CELL*cw,op.z/CELL*ch,cw*1.2,0,Math.PI*2);mmX.fill();
+    }
+
+    // Self as yellow dot
+    mmX.fillStyle='rgba(255,210,40,1)';
+    mmX.beginPath();mmX.arc(P.x/CELL*cw,P.z/CELL*ch,cw*1.3,0,Math.PI*2);mmX.fill();
+
+    // FOV cone
     mmX.save();mmX.globalAlpha=.18;mmX.fillStyle='rgba(255,220,60,.8)';
     mmX.beginPath();mmX.moveTo(P.x/CELL*cw,P.z/CELL*ch);
     const a=Math.PI/2-P.yaw;
@@ -624,8 +641,10 @@ function drawGhost(VP,ts){
   gl.disableVertexAttribArray(sp);gl.disableVertexAttribArray(sn);
 }
 
-// Draw other players as colored spheres
-// Ghost sees ALL hunters. Hunters see other hunters. Nobody except ghost sees ghost sphere.
+// Draw other players as colored spheres in world-space.
+// `others` already contains only non-ghost, non-self players.
+// Ghost player sees all hunters. Hunters see other hunters.
+// Ghost entity itself is rendered via drawGhost().
 function drawOtherPlayers(VP){
   if(!others.length)return;
   gl.useProgram(pProg);
@@ -637,16 +656,10 @@ function drawOtherPlayers(VP){
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,SIB);
 
   for(const op of others){
-    // Skip dead players
     if(op.alive===false)continue;
-    // Hunters skip the ghost player — ghost renders via drawGhost()
-    if(op.role==='ghost'&&myRole!=='ghost')continue;
-    // If I am the ghost, I see all hunters as colored spheres (always)
-    // If I am a hunter, I see other hunters as colored spheres (always)
-
     const rgb=parseColor(op.color||'hsl(120,70%,55%)');
     const px=op.x, py=(op.y||EYE), pz=op.z;
-    const sz=0.18*CELL; // visible sphere size
+    const sz=0.18*CELL;
     const M=m4mul(m4tr(px,py,pz),m4sc(sz,sz,sz));
     gl.uniformMatrix4fv(gl.getUniformLocation(pProg,'uMVP'),false,m4mul(VP,M));
     gl.uniformMatrix4fv(gl.getUniformLocation(pProg,'uM'),false,M);
