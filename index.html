@@ -345,6 +345,7 @@ socket.on('game:start',({players})=>{
   const me=players.find(p=>p.id===socket.id);
   if(!me){ console.error('[game:start] ERROR: could not find self in player list!'); return; }
   myRole=me.role;
+  P.maxLives=me.lives||3; // store for HUD
   // Always use server spawn position if valid (>0.1), otherwise pick random open cell
   if(me.x!=null && (Math.abs(me.x)>0.1||Math.abs(me.z)>0.1)){
     P.x=me.x; P.z=me.z;
@@ -356,7 +357,7 @@ socket.on('game:start',({players})=>{
   }
   P.y=EYE;
   P.yaw=Math.atan2(MC*CELL/2-P.x, MR*CELL/2-P.z);
-  startGame(players);
+  try { startGame(players); } catch(err){ console.error('[startGame ERROR]',err); }
 });
 
 socket.on('game:state',(pkt)=>{
@@ -541,7 +542,7 @@ function showDownedScreen(){
     <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:rgba(255,100,100,0);font-size:22px;letter-spacing:3px;font-family:Georgia,serif;transition:color 1.5s 0.8s;">💀 DOWNED — Ally must revive you</div>
   `;
   requestAnimationFrame(()=>requestAnimationFrame(()=>{
-    const panels=d.querySelectorAll('div>div');
+    const panels=d.children;
     if(panels[0])panels[0].style.transform='scaleY(1)';
     if(panels[1])panels[1].style.transform='scaleY(1)';
     if(panels[2])panels[2].style.color='rgba(255,140,140,1)';
@@ -564,7 +565,7 @@ function updateHUD(){
 
     // Lives
     const le=document.getElementById('lives');le.innerHTML='';
-    for(let i=0;i<3;i++){const s=document.createElement('span');s.className='heart';s.textContent=i<P.lives?'❤️':'🖤';le.appendChild(s);}
+    const maxH=P.maxLives||P.lives||3;for(let i=0;i<maxH;i++){const s=document.createElement('span');s.className='heart';s.textContent=i<P.lives?'❤️':'🖤';le.appendChild(s);}
   }
   // Ghost HP bar (visible to hunters only)
   if(myRole!=='ghost'){
