@@ -375,10 +375,12 @@ socket.on('game:state',(pkt)=>{
   if(pkt.batteries) bats=pkt.batteries;
   if(pkt.litAmt!==undefined) litAmt=pkt.litAmt;
 
-  // My authoritative state from server
+  // My authoritative state from server — accept ALL position/state from server
   const me=(pkt.players||[]).find(p=>p.id===socket.id);
   if(me){
-    // Server is authoritative for battery — accept it directly, no local override
+    // Server is fully authoritative — update position, yaw, and all state
+    P.x=me.x; P.z=me.z;
+    if(me.y&&me.y>0) P.y=me.y;
     P.battery=me.battery;
     P.flashOn=me.flashOn;
     P.lives=me.lives;
@@ -746,7 +748,7 @@ function loop(ts){
   }
   mDX=0;mDY=0;
 
-  // Movement - ALWAYS runs when inGame, no pointer lock needed
+  // Movement - client-side prediction (server corrects via game:state)
   const spd=2.2*dt;
   const sY=Math.sin(P.yaw),cY=Math.cos(P.yaw);
   let mvdx=0,mvdz=0;
@@ -758,7 +760,9 @@ function loop(ts){
   if(moving)tryMove(P.x+mvdx,P.z+mvdz);
   P.bobAmt=moving?Math.min(1,P.bobAmt+dt*5):Math.max(0,P.bobAmt-dt*8);
   if(moving)P.bobT+=dt*5.5;
-  P.y=EYE+P.bobAmt*Math.sin(P.bobT)*.028;
+  // Bob only affects visual y, base comes from role
+  const baseY = myRole==='ghost' ? GR : EYE;
+  P.y=baseY+P.bobAmt*Math.sin(P.bobT)*.028;
 
   // Send input to server at 30Hz - always, even when standing still (so server has yaw)
   inputT+=dt;
